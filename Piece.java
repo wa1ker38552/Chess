@@ -8,7 +8,7 @@ public class Piece {
 	ImageIcon pieceIcon;
 	
 	public Piece(String piece) {
-		Image icon = new ImageIcon("C:\\Users\\walke\\eclipse-workspace\\Semester 2 Project\\assets\\"+piece+".png").getImage().getScaledInstance(40, 40, Image.SCALE_DEFAULT);
+		Image icon = new ImageIcon("path to piece"+piece+".png").getImage().getScaledInstance(40, 40, Image.SCALE_DEFAULT);
 		this.piece = piece;
 		this.pieceIcon = new ImageIcon(icon);
 	}
