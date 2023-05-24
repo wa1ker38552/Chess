@@ -7,6 +7,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 
 public class Runner {
 	public static void main(String[] args) {
@@ -21,6 +22,7 @@ public class Runner {
 		JMenuItem restartButton = new JMenuItem("Restart"); 
 		JCheckBoxMenuItem playAIButton = new JCheckBoxMenuItem("Play with AI");
 		JCheckBoxMenuItem highlightValidMoves = new JCheckBoxMenuItem("Show valid moves");
+		JCheckBoxMenuItem autoPromoteButton = new JCheckBoxMenuItem("Auto promote");
 		highlightValidMoves.setState(true);
 
 		
@@ -36,6 +38,9 @@ public class Runner {
 		});
 		playAIButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				if (playAIButton.getState()) {
+					JOptionPane.showMessageDialog(null, "You may need to play one more turn as black until the AI starts playing.", "Game", JOptionPane.INFORMATION_MESSAGE);
+				}
 				chess.setPlayingAI(playAIButton.getState());
 			}
 		});
@@ -44,11 +49,27 @@ public class Runner {
 				chess.setShowValidMoves(highlightValidMoves.getState());
 			}
 		});
+		autoPromoteButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				chess.setAutoPromote(autoPromoteButton.getState());
+				if (autoPromoteButton.getState()) {
+					SelectionPanel selectionPanel = new SelectionPanel(chess);
+					JOptionPane.showMessageDialog(null, selectionPanel, "Auto Piece Promotion", JOptionPane.PLAIN_MESSAGE);
+					if (chess.getAutoPromotePiece() == null) {
+						chess.setAutoPromote(false);
+						autoPromoteButton.setState(false);
+					}
+				} else {
+					chess.setAutoPromotePiece(null);
+				}
+			}
+		});
 		
 		menu.add(quitButton);
 		menu.add(restartButton);
 		menu.add(playAIButton);
 		menu.add(highlightValidMoves);
+		menu.add(autoPromoteButton);
 		menuBar.add(menu);
 		
 		window.setJMenuBar(menuBar);
