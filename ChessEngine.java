@@ -12,11 +12,25 @@ public class ChessEngine {
 	private ChessAI ai;
 	private boolean playAI = false;
 	private boolean showValidMoves = true;
+	private String autoPromotePiece;
+	private boolean autoPromote;
 	
 	public ChessEngine(JFrame frame) {
 		this.turn = 0;
 		this.chessFrame = frame;
 		this.ai = new ChessAI(this);
+	}
+	
+	public void setAutoPromote(boolean condition) {
+		this.autoPromote = condition;
+	}
+	
+	public String getAutoPromotePiece() {
+		return this.autoPromotePiece;
+	}
+	
+	public void setAutoPromotePiece(String piece) {
+		this.autoPromotePiece = piece;
 	}
 	
 	public void setShowValidMoves(boolean condition) {
@@ -120,11 +134,21 @@ public class ChessEngine {
 						}
 					}
 					if (newPosition.getY() == 0 && targetPiece.getPiece() == "WP") {
-						tile.setPiece(new Piece("WP"));
-						SelectionPanel selectionPanel = new SelectionPanel(this, tile);
-						JOptionPane.showMessageDialog(null, selectionPanel, "Piece Promotion", JOptionPane.PLAIN_MESSAGE);
+						if (this.autoPromote) {
+							tile.setPiece(new Piece(this.autoPromotePiece));
+						} else {
+							tile.setPiece(new Piece("WP"));
+							SelectionPanel selectionPanel = new SelectionPanel(this, tile, 0);
+							JOptionPane.showMessageDialog(null, selectionPanel, "Piece Promotion", JOptionPane.PLAIN_MESSAGE);
+						}
 					} else if (newPosition.getY() == 7 && targetPiece.getPiece() == "BP") {
-						tile.setPiece(new Piece("BQ"));
+						if (this.playAI) {
+							tile.setPiece(new Piece("BQ"));
+						} else {
+							tile.setPiece(new Piece("BP"));
+							SelectionPanel selectionPanel = new SelectionPanel(this, tile, 1);
+							JOptionPane.showMessageDialog(null, selectionPanel, "Piece Promotion", JOptionPane.PLAIN_MESSAGE);
+						}
 					} else {
 						tile.setPiece(targetPiece);
 					}
