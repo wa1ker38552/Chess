@@ -14,11 +14,16 @@ public class ChessEngine {
 	private boolean showValidMoves = true;
 	private String autoPromotePiece;
 	private boolean autoPromote;
+	private boolean closedFrame;
 	
 	public ChessEngine(JFrame frame) {
 		this.turn = 0;
 		this.chessFrame = frame;
 		this.ai = new ChessAI(this);
+	}
+	
+	public void setTurn(int turn) {
+		this.turn = turn;
 	}
 	
 	public void setAutoPromote(boolean condition) {
@@ -45,12 +50,17 @@ public class ChessEngine {
 		board[row][col] = tile;
 	}
 	
+	public void setGameState(ChessTile[][] state) {
+		this.board = state;
+	}
+	
 	public ChessTile[][] getGameState() {
 		return this.board;
 	}
 	
 	public void promotePiece(String piece, ChessTile tile) {
 		tile.setPiece(new Piece(piece));
+		this.closedFrame = false;
 	}
 	
 	public void resetTileColors() {
@@ -85,6 +95,11 @@ public class ChessEngine {
 				}
 			}
 		}
+	}
+	
+	public void declareWinner(String color) {
+		JOptionPane.showMessageDialog(null, color+" WINS!", "Game", JOptionPane.INFORMATION_MESSAGE);
+		this.chessFrame.dispatchEvent(new WindowEvent(this.chessFrame, WindowEvent.WINDOW_CLOSING));
 	}
 	
 	public void setCurrentSelected(ChessTile tile) {
@@ -125,12 +140,10 @@ public class ChessEngine {
 						// Reason while tile set so many times is so it doesn't set before it checks
 						if (tile.getPiece().getPiece().equals("WK")) {
 							tile.setPiece(targetPiece);
-							JOptionPane.showMessageDialog(null, "BLACK WINS!", "Game", JOptionPane.INFORMATION_MESSAGE);
-							this.chessFrame.dispatchEvent(new WindowEvent(this.chessFrame, WindowEvent.WINDOW_CLOSING));
+							declareWinner("Black");
 						} else if (tile.getPiece().getPiece().equals("BK")) {
 							tile.setPiece(targetPiece);
-							JOptionPane.showMessageDialog(null, "WHITE WINS!", "Game", JOptionPane.INFORMATION_MESSAGE);
-							this.chessFrame.dispatchEvent(new WindowEvent(this.chessFrame, WindowEvent.WINDOW_CLOSING));
+							declareWinner("White");
 						}
 					}
 					if (newPosition.getY() == 0 && targetPiece.getPiece() == "WP") {
@@ -139,7 +152,10 @@ public class ChessEngine {
 						} else {
 							tile.setPiece(new Piece("WP"));
 							SelectionPanel selectionPanel = new SelectionPanel(this, tile, 0);
-							JOptionPane.showMessageDialog(null, selectionPanel, "Piece Promotion", JOptionPane.PLAIN_MESSAGE);
+							closedFrame = true;
+							while (closedFrame) {
+								JOptionPane.showMessageDialog(null, selectionPanel, "Piece Promotion", JOptionPane.PLAIN_MESSAGE);
+							}
 						}
 					} else if (newPosition.getY() == 7 && targetPiece.getPiece() == "BP") {
 						if (this.playAI) {
@@ -147,7 +163,10 @@ public class ChessEngine {
 						} else {
 							tile.setPiece(new Piece("BP"));
 							SelectionPanel selectionPanel = new SelectionPanel(this, tile, 1);
-							JOptionPane.showMessageDialog(null, selectionPanel, "Piece Promotion", JOptionPane.PLAIN_MESSAGE);
+							closedFrame = true;
+							while (closedFrame) {
+								JOptionPane.showMessageDialog(null, selectionPanel, "Piece Promotion", JOptionPane.PLAIN_MESSAGE);
+							}
 						}
 					} else {
 						tile.setPiece(targetPiece);
@@ -273,7 +292,142 @@ public class ChessEngine {
 		return true;
 	}
 	
+	public boolean isInCheck(int num, ChessTile[][] fakeBoard) {
+		// check if the move they make places the other color in check
+		ChessEngine fakeEngine = new ChessEngine(this.chessFrame);
+		fakeEngine.setGameState(fakeBoard);
+		String color;
+		String opposite;
+		ChessTile king = null;
+		ArrayList<ChessTile> attackingTiles = new ArrayList<ChessTile>();
+		if (num == 1) {
+			color = "W";
+			opposite = "B";
+		} else {
+			color = "B";
+			opposite = "W";
+		}
+		for (ChessTile[] row : fakeBoard) {
+			for (ChessTile tile : row) {
+				if (tile.hasPiece()) {
+					if (tile.getPiece().getPiece().substring(0, 1).equals(color)) {
+						attackingTiles.add(tile);
+					} else if (tile.getPiece().getPiece().equals(opposite+"K")) {
+						king = tile;
+					}
+				}
+			}
+		}
+		for (ChessTile tile : attackingTiles) {
+			Pos position = king.getPosition().calculateDistance(tile.getPosition());
+			if (fakeEngine.checkValidMoveWithoutCheck(position, tile, king)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean isInCheckmate(int num) {
+		// loop over every move and check if it's a check if it isn't and its valid, return false
+		String color;
+		int opNum;
+		ArrayList<ChessTile> selfTiles = new ArrayList<ChessTile>();
+		ArrayList<ChessTile> validTiles = new ArrayList<ChessTile>();
+		ChessTile[][] fakeBoard = new ChessTile[8][8];
+		if (num == 1) {
+			opNum = 0;
+			color = "W";
+		} else {
+			opNum = 1;
+			color = "B";
+		}
+		
+		for (ChessTile[] row : this.board) {
+			for (ChessTile tile : row) {
+				if (tile.hasPiece() && tile.getPiece().getPiece().substring(0, 1).equals(color)) {
+					selfTiles.add(tile);
+				} else {
+					validTiles.add(tile);
+				}
+			}
+		}
+		for (ChessTile selfTile : selfTiles) {
+			for (ChessTile validTile : validTiles) {
+				Pos position = validTile.getPosition().calculateDistance(selfTile.getPosition());
+				if (checkValidMoveWithoutCheck(position, selfTile, validTile)) {
+					fakeBoard = createFakeBoard(selfTile, validTile);
+					if (isInCheck(opNum, fakeBoard) == false) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+	
+	public ChessTile[][] createFakeBoard(ChessTile self, ChessTile target) {
+		ChessTile[][] fakeBoard = new ChessTile[8][8];
+		for (int r=0; r<8; r++) {
+			for (int c=0; c<8; c++) {
+				if (r == self.getPosition().getY() && c == self.getPosition().getX()) {
+					fakeBoard[r][c] = new ChessTile(new Pos(c, r), this);
+					fakeBoard[r][c].setPiece(null);
+				} else if (r == target.getPosition().getY() && c == target.getPosition().getX()) {
+					fakeBoard[r][c] = new ChessTile(new Pos(c, r), this);
+					fakeBoard[r][c].setPiece(self.getPiece());
+				} else {
+					fakeBoard[r][c] = this.board[r][c];
+				}
+			}
+		}
+		return fakeBoard;
+	}
+	
 	public boolean checkValidMove(Pos pos, ChessTile self, ChessTile target) {
+		ChessTile[][] fakeBoard = createFakeBoard(self, target);
+		
+		/* PRINT THE FAKEBOARD OUT
+		for (ChessTile[] row : fakeBoard) {
+			for (ChessTile tile : row) {
+				if (tile.hasPiece()) {
+					System.out.print(tile+" ");
+				} else {
+					System.out.print("    ");
+				}
+			}
+			System.out.println();
+		}
+		System.out.println("\n\n\n");
+		*/
+		
+		if (self.getPiece().getPiece().charAt(0) == 'W') {
+			if (isInCheck(0, fakeBoard)) {
+				if (isInCheckmate(1)) {
+					declareWinner("Black");
+				} else {
+					return false;
+				}
+			}
+		} else {
+			if (isInCheck(1, fakeBoard)) {
+				if (isInCheckmate(0)) {
+					declareWinner("White");
+				} else {
+					return false;
+				}
+			}
+		}
+		
+		return CVM(pos, self, target);
+	}
+	
+	public boolean checkValidMoveWithoutCheck(Pos pos, ChessTile self, ChessTile target) {
+		// isCheck calls checkValidMove so there needs to be a helper method for it in order to avoid infinite recursion
+		return CVM(pos, self, target);
+	}
+	
+	public boolean CVM(Pos pos, ChessTile self, ChessTile target) {
+		// Helper method
 		// pos is just coordinate difference between the two squares, self and target
 		String selfPiece = self.getPiece().getPiece();
 		String targetPiece;
