@@ -76,6 +76,9 @@ public class ChessTile extends JButton {
 	
 	public String toString() {
 		if (this.hasPiece()) {
+			if (!this.piece.getPiece().contains("Kn")) {
+				return this.piece.getPiece()+" ";
+			}
 			return this.piece.getPiece();
 		} else {
 			return null;
