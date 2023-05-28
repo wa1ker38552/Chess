@@ -2,6 +2,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -14,6 +15,8 @@ public class Runner {
 		JFrame window = new JFrame("Chess");
 		ChessEngine chess = new ChessEngine(window);
 		ChessPanel content = new ChessPanel(chess);
+		
+		window.setIconImage(new ImageIcon("C:\\Users\\walke\\eclipse-workspace\\Semester 2 Project\\assets\\chess icon.jpg").getImage());
 		
 		// create menubar
 		JMenuBar menuBar = new JMenuBar();
