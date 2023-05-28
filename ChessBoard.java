@@ -16,6 +16,10 @@ public class ChessBoard extends JPanel {
 		fillTiles();
 	}
 	
+	public ChessEngine getEngine() {
+		return this.chess;
+	}
+	
 	public void fillTiles() {
 		for (int row=0; row<8; row++) {
 			for (int col=0; col<8; col++) {
