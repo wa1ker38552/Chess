@@ -44,7 +44,7 @@ public class ChessAI {
 	
 	public Move getBestMove() {
 		if (this.engine.getFromStockfish()) {
-			Stockfish stockfish = new Stockfish("assets\\\\stockfish-windows-2022-x86-64-avx2.exe");
+			Stockfish stockfish = new Stockfish("assets\\stockfish-windows-2022-x86-64-avx2.exe");
 			
 			ChessTile[][] board = this.engine.getGameState();
 			String notation = notationCalculator.getFEN(board).replace(" ", "%20");
