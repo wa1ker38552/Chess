@@ -1,5 +1,7 @@
 import java.util.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 
 import javax.swing.*;
@@ -15,15 +17,35 @@ public class ChessEngine {
 	private String autoPromotePiece;
 	private boolean autoPromote;
 	private boolean closedFrame;
+	private ChessPanel chessPanel;
+	private NotationCalculator notationCalculator;
+	private boolean fromStockfish = false;
 	
 	public ChessEngine(JFrame frame) {
 		this.turn = 0;
 		this.chessFrame = frame;
 		this.ai = new ChessAI(this);
+		this.notationCalculator = new NotationCalculator(this);
+	}
+	
+	public void setFromStockfish(boolean condition) {
+		this.fromStockfish = condition;
+	}
+	
+	public boolean getFromStockfish() {
+		return this.fromStockfish;
+	}
+		
+	public void setChessPanel(ChessPanel chessPanel) {
+		this.chessPanel = chessPanel;
 	}
 	
 	public void setTurn(int turn) {
 		this.turn = turn;
+	}
+	
+	public int getTurn() {
+		return this.turn;
 	}
 	
 	public void setAutoPromote(boolean condition) {
@@ -98,8 +120,31 @@ public class ChessEngine {
 	}
 	
 	public void declareWinner(String color) {
-		JOptionPane.showMessageDialog(null, color+" WINS!", "Game", JOptionPane.INFORMATION_MESSAGE);
-		this.chessFrame.dispatchEvent(new WindowEvent(this.chessFrame, WindowEvent.WINDOW_CLOSING));
+		JPanel winPanel = new JPanel();
+		JPanel optionsContainer = new JPanel();
+		JButton restart = new JButton("Restart");
+		JButton quit = new JButton("Quit");
+		
+		restart.addActionListener(new ActionListener() {
+		    public void actionPerformed(ActionEvent e) {
+		    	SwingUtilities.getWindowAncestor(restart).setVisible(false);;
+		    	chessPanel.resetGame(); 
+		    }
+		});
+		
+		quit.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				chessFrame.dispatchEvent(new WindowEvent(chessFrame, WindowEvent.WINDOW_CLOSING));
+			}
+		});
+		
+		winPanel.setLayout(new GridLayout(1, 2));
+		winPanel.add(new JLabel(color+" WINS!"));
+		optionsContainer.add(restart);
+		optionsContainer.add(quit);
+		winPanel.add(optionsContainer);
+		
+		JOptionPane.showMessageDialog(null, winPanel, "Game", JOptionPane.INFORMATION_MESSAGE);
 	}
 	
 	public void setCurrentSelected(ChessTile tile) {
@@ -170,6 +215,7 @@ public class ChessEngine {
 						}
 					} else {
 						tile.setPiece(targetPiece);
+						// System.out.println(notationCalculator.getFEN(this.board));
 					}
 					
 					currentlySelected = null;
@@ -404,6 +450,8 @@ public class ChessEngine {
 			if (isInCheck(0, fakeBoard)) {
 				if (isInCheckmate(1)) {
 					declareWinner("Black");
+					currentlySelected = null;
+					return false;
 				} else {
 					return false;
 				}
@@ -412,6 +460,8 @@ public class ChessEngine {
 			if (isInCheck(1, fakeBoard)) {
 				if (isInCheckmate(0)) {
 					declareWinner("White");
+					currentlySelected = null;
+					return false;
 				} else {
 					return false;
 				}
