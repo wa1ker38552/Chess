@@ -22,7 +22,7 @@ public class SelectionPanel extends JPanel {
 		
 		for (String piece : pieces) {
 			JButton pieceButton = new JButton();
-			Image icon = new ImageIcon("C:\\Users\\walke\\eclipse-workspace\\Semester 2 Project\\assets\\"+piece+".png").getImage().getScaledInstance(40, 40, Image.SCALE_DEFAULT);
+			Image icon = new ImageIcon("assets\\"+piece+".png").getImage().getScaledInstance(40, 40, Image.SCALE_DEFAULT);
 			
 			pieceButton.setIcon(new ImageIcon(icon));
 			pieceButton.addActionListener(new ActionListener() {
